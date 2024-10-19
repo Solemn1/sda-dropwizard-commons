@@ -10,6 +10,7 @@ on:
 jobs:
   # build library
   build:
+    name: build (${{matrix.java_version}}, ${{ startsWith(matrix.os, 'windows-') && 'windows-latest' || 'ubuntu-latest' }})
     runs-on: ${{ matrix.os }}
 
     strategy:
@@ -17,11 +18,11 @@ jobs:
       fail-fast: false
       matrix:
         java_version: ['17', '21']
-        os: ['ubuntu-latest', 'windows-latest']
+        os: ['ubuntu-22.04', 'windows-2022']
 
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4
         with:
           fetch-depth: 0 # fetch commit log so that Sonar is able to assign committers to issues
 
@@ -45,10 +46,11 @@ jobs:
         if: always()
         run: ./gradlew -x test testReport codeCoverageReport
 
-      - uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+      - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # v4.4.3
         if: always()
         with:
-          name: ${{ matrix.os }}-${{ matrix.java_version }}-test-results
+          # keep latest suffix for subsequent workflows
+          name: ${{ startsWith(matrix.os, 'windows-') && 'windows-latest' || 'ubuntu-latest' }}-${{ matrix.java_version }}-test-results
           path: |
             build/reports/
             */build/test-results/**/*.xml
@@ -79,7 +81,7 @@ jobs:
     timeout-minutes: 60
     needs: build
     steps:
-      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4
 
       - name: Setup Node.js
         uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6 # v3
